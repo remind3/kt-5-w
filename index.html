@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Погодный виджет</title>
+    <style>
+     
+        weather-widget {
+            --background-color: #f0f8ff;
+            --text-color: #333;
+            --temperature-color: #ff4500; 
+            --border-radius: 10px;
+            --font-size: 16px;
+            --box-shadow: rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <weather-widget></weather-widget>
+
+    <script>
+        class WeatherWidget extends HTMLElement {
+            constructor() {
+                super();
+
+            
+                this.attachShadow({ mode: "open" });
+
+               
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        :host {
+                            display: block;
+                            font-family: Arial, sans-serif;
+                            color: var(--text-color, #333);
+                            background-color: var(--background-color, #e0f7fa);
+                            border-radius: var(--border-radius, 8px);
+                            padding: 20px;
+                            box-shadow: 0 4px 8px var(--box-shadow, rgba(0, 0, 0, 0.2));
+                            width: 300px;
+                            text-align: center;
+                            margin: 20px auto;
+                            font-size: var(--font-size, 16px);
+                        }
+
+                        h2 {
+                            margin: 0 0 10px 0;
+                            font-size: 1.5em;
+                        }
+
+                        .temperature {
+                            font-size: 2em;
+                            color: var(--temperature-color, #007BFF);
+                        }
+
+                        .weather-icon {
+                            width: 80px;
+                            height: 80px;
+                            margin: 10px auto;
+                        }
+
+                        .description {
+                            font-style: italic;
+                        }
+                    </style>
+
+                    <div>
+                        <h2 id="location">Загрузка...</h2>
+                        <img id="icon" class="weather-icon" src="" alt="Иконка погоды" style="display: none;">
+                        <div class="temperature" id="temperature">--°C</div>
+                        <div class="description" id="description">--</div>
+                    </div>
+                `;
+
+                this.apiKey = "YOUR_API_KEY"; // Вставьте ваш API-ключ
+                this.city = "Moscow"; 
+            }
+
+            connectedCallback() {
+                this.fetchWeather();
+            }
+
+            async fetchWeather() {
+                const url = "https://api.openweathermap.org/data/2.5/weather?q=${this.city}&units=metric&lang=ru&appid=${this.apiKey}";
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    if (data.cod !== 200) {
+                        throw new Error(data.message);
+                    }
+                    this.updateWeather(data);
+                } catch (error) {
+                    console.error("Ошибка получения данных:", error.message);
+                    this.shadowRoot.querySelector("#location").textContent = "Ошибка загрузки данных";
+                    this.shadowRoot.querySelector("#temperature").textContent = "--";
+                    this.shadowRoot.querySelector("#description").textContent = error.message;
+                }
+            }
+
+            updateWeather(data) {
+                const location = this.shadowRoot.querySelector("#location");
+                const temperature = this.shadowRoot.querySelector("#temperature");
+const description = this.shadowRoot.querySelector("#description");
+                const icon = this.shadowRoot.querySelector("#icon");
+
+                location.textContent = ${data.name}, ${data.sys.country};
+                temperature.textContent = ${Math.round(data.main.temp)}°C;
+                description.textContent = data.weather[0].description;
+
+             
+                const iconCode = data.weather[0].icon;
+                icon.src = "https://openweathermap.org/img/wn/${iconCode}@2x.png";
+                icon.style.display = "block";
+            }
+        }
+
+        
+        customElements.define("weather-widget", WeatherWidget);
+    </script>
+</body>
+</html>
